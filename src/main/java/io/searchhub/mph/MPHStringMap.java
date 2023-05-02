@@ -1,5 +1,6 @@
 package io.searchhub.mph;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -22,7 +23,9 @@ import org.minperf.universal.UniversalHash;
  * @param <V>
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class MPHStringMap<V> implements Map<String, V> {
+public class MPHStringMap<V> implements Map<String, V>, Serializable {
+
+	static final long serialVersionUID = 1_000L;
 
 	public static <V> MPHStringMap<V> build(Map<String, V> inputData) {
 		return build(inputData.keySet(), inputData::get, inputData.size());
