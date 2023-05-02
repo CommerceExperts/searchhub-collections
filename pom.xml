@@ -21,6 +21,11 @@
 	</scm>
 
 	<dependencies>
+        <dependency>
+            <groupId>thomasmueller</groupId>
+            <artifactId>minperf</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
