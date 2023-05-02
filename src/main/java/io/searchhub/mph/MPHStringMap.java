@@ -10,6 +10,7 @@ import org.minperf.BitBuffer;
 import org.minperf.RecSplitBuilder;
 import org.minperf.RecSplitEvaluator;
 import org.minperf.universal.StringHash;
+import org.minperf.universal.UniversalHash;
 
 /**
  * Immutable map using minimal perfect hashing for the keys + stores additional hash value per key to reduce risk of wrong mapping.
@@ -23,34 +24,67 @@ import org.minperf.universal.StringHash;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class MPHStringMap<V> implements Map<String, V> {
 
-	public static <K, V> MPHStringMap<V> build(Map<String, V> inputData) {
-		long[] keyValueMap = new long[inputData.size()];
-		V[] values = (V[]) new Object[inputData.size()];
+	public static <V> MPHStringMap<V> build(Map<String, V> inputData) {
+		return build(inputData.keySet(), inputData::get, inputData.size());
+	}
 
-		if (inputData.isEmpty()) return new MPHStringMap<>(k -> -1, keyValueMap, values);
+	/**
+	 * Use this builder in case you have duplicate values that can be stored once.
+	 * To use it, the exact amount of values has to be known.
+	 * The values SHOULD implement equals and hashCode to allow a correct deduplication.
+	 *
+	 * @param keys key-set
+	 * @param valueLookup function to lookup a value for a key
+	 * @param valueCount the exact count of values. If the value count is similar to the amount of keys, no deduplication is done.
+	 * @return
+	 * @param <V> value type
+	 */
+	public static <V> MPHStringMap<V> build(Set<String> keys, Function<String, V> valueLookup, int valueCount) {
+		long[] keyValueMap = new long[keys.size()];
+		V[] values = (V[]) new Object[valueCount];
 
+		if (keys.isEmpty()) return new MPHStringMap<>(k -> -1, keyValueMap, values);
+
+		RecSplitEvaluator<String> recSplitEvaluator = getMphFunction(keys);
+
+		AtomicInteger valueIndex = new AtomicInteger(0);
+		// if there are less values than keys, then use deduplication
+		Map<V, Integer> valueDeduplication = valueCount == keys.size() ? null : new HashMap<>();
+		for(String key :keys) {
+			int keyIndex = recSplitEvaluator.evaluate(key);
+			V value = valueLookup.apply(key);
+
+			int _valueIndex;
+			if (valueDeduplication != null) {
+				_valueIndex = valueDeduplication.computeIfAbsent(value, v -> valueIndex.getAndIncrement());
+			} else {
+				_valueIndex = valueIndex.getAndIncrement();
+			}
+
+			if (_valueIndex >= values.length) {
+				throw new IllegalArgumentException("Found more values than specified by valueCount "+valueCount);
+			}
+			values[_valueIndex] = value;
+			keyValueMap[keyIndex] = getVerifiableValueIndex(key, _valueIndex);
+		}
+
+		return new MPHStringMap<>(recSplitEvaluator::evaluate, keyValueMap, values);
+	}
+
+	private static RecSplitEvaluator<String> getMphFunction(Set<String> keys) {
 		int LEAF_SIZE = 8;
 		int AVG_BUCKET_SIZE = 32;
+		UniversalHash<String> hashFunction = new StringHash();
 		BitBuffer mphFunction = RecSplitBuilder
-				.newInstance(new StringHash())
+				.newInstance(hashFunction)
 				.leafSize(LEAF_SIZE)
 				.averageBucketSize(AVG_BUCKET_SIZE)
-				.generate(inputData.keySet());
-		RecSplitEvaluator<String> recSplitEvaluator = RecSplitBuilder
-				.newInstance(new StringHash())
+				.generate(keys);
+		return RecSplitBuilder
+				.newInstance(hashFunction)
 				.leafSize(LEAF_SIZE)
 				.averageBucketSize(AVG_BUCKET_SIZE)
 				.buildEvaluator(mphFunction);
-
-		AtomicInteger valueIndex = new AtomicInteger(0);
-		inputData.forEach((key, value) -> {
-			int keyIndex = recSplitEvaluator.evaluate(key);
-			int _valueIndex = valueIndex.getAndIncrement();
-			values[_valueIndex] = value;
-			keyValueMap[keyIndex] = getVerifiableValueIndex(key, _valueIndex);
-		});
-
-		return new MPHStringMap<>(recSplitEvaluator::evaluate, keyValueMap, values);
 	}
 
 	private final Function<String, Integer> mphFunction;

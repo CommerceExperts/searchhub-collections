@@ -76,4 +76,13 @@ class MPHStringMapTest {
 		assertTrue(emptyMap.isEmpty());
 		assertEquals(0, emptyMap.size());
 	}
+
+	@Test
+	void duplicateValues() {
+		MPHStringMap<Boolean> hashSet = MPHStringMap.build(testData.keySet(), k -> Boolean.TRUE, 1);
+		assertEquals(1, hashSet.values().size());
+
+		Iterator<String> keyIterator = testData.keySet().iterator();
+		assertSame(hashSet.get(keyIterator.next()), hashSet.get(keyIterator.next()));
+	}
 }
