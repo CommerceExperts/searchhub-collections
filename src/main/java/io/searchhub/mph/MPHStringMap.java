@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.minperf.BitBuffer;
 import org.minperf.RecSplitBuilder;
@@ -23,9 +24,26 @@ import org.minperf.universal.UniversalHash;
  * @param <V>
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class MPHStringMap<V> implements Map<String, V>, Serializable {
+public class MPHStringMap<V> implements Map<String, V> {
 
-	static final long serialVersionUID = 1_000L;
+	private final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
+
+	@RequiredArgsConstructor
+	public final static class SerializableData<V> implements Serializable {
+
+		static <X> SerializableData<X> getEmptyData() {
+			return new SerializableData<X>(8, 32, new byte[0], new long[0], (X[]) new Object[0]);
+		}
+
+		static final long serialVersionUID = 1_000L;
+
+		final int    leafSize;
+		final int    avgBucketSize;
+		final byte[] mphFunctionData;
+		final long[] keyValueMap;
+		final V[]    values;
+
+	}
 
 	public static <V> MPHStringMap<V> build(Map<String, V> inputData) {
 		return build(inputData.keySet(), inputData::get, inputData.size());
@@ -36,63 +54,85 @@ public class MPHStringMap<V> implements Map<String, V>, Serializable {
 	 * To use it, the exact amount of values has to be known.
 	 * The values SHOULD implement equals and hashCode to allow a correct deduplication.
 	 *
-	 * @param keys key-set
+	 * @param keys        key-set
 	 * @param valueLookup function to lookup a value for a key
-	 * @param valueCount the exact count of values. If the value count is similar to the amount of keys, no deduplication is done.
+	 * @param valueCount  the exact count of values. If the value count is similar to the amount of keys, no deduplication is done.
+	 * @param <V>         value type
 	 * @return
-	 * @param <V> value type
 	 */
 	public static <V> MPHStringMap<V> build(Set<String> keys, Function<String, V> valueLookup, int valueCount) {
 		long[] keyValueMap = new long[keys.size()];
 		V[] values = (V[]) new Object[valueCount];
+		if (keys.isEmpty()) return new MPHStringMap<>(EMPTY_MAP_FUNCTION, SerializableData.getEmptyData());
 
-		if (keys.isEmpty()) return new MPHStringMap<>(k -> -1, keyValueMap, values);
+		int leafSize = 8, avgBucketSize = 32;
+		byte[] mphFunctionData = getMphFunctionData(leafSize, avgBucketSize, keys);
+		SerializableData<V> mphMapData = new SerializableData<>(leafSize, avgBucketSize, mphFunctionData, keyValueMap, values);
 
-		RecSplitEvaluator<String> recSplitEvaluator = getMphFunction(keys);
-
+		RecSplitEvaluator<String> recSplitEvaluator = buildEvaluator(leafSize, avgBucketSize, mphFunctionData);
 		AtomicInteger valueIndex = new AtomicInteger(0);
 		// if there are less values than keys, then use deduplication
 		Map<V, Integer> valueDeduplication = valueCount == keys.size() ? null : new HashMap<>();
-		for(String key :keys) {
+		for (String key : keys) {
 			int keyIndex = recSplitEvaluator.evaluate(key);
 			V value = valueLookup.apply(key);
 
 			int _valueIndex;
 			if (valueDeduplication != null) {
 				_valueIndex = valueDeduplication.computeIfAbsent(value, v -> valueIndex.getAndIncrement());
-			} else {
+			}
+			else {
 				_valueIndex = valueIndex.getAndIncrement();
 			}
 
 			if (_valueIndex >= values.length) {
-				throw new IllegalArgumentException("Found more values than specified by valueCount "+valueCount);
+				throw new IllegalArgumentException("Found more values than specified by valueCount " + valueCount);
 			}
 			values[_valueIndex] = value;
 			keyValueMap[keyIndex] = getVerifiableValueIndex(key, _valueIndex);
 		}
 
-		return new MPHStringMap<>(recSplitEvaluator::evaluate, keyValueMap, values);
+		return new MPHStringMap<>(mphMapData);
 	}
 
-	private static RecSplitEvaluator<String> getMphFunction(Set<String> keys) {
-		int LEAF_SIZE = 8;
-		int AVG_BUCKET_SIZE = 32;
+	private static byte[] getMphFunctionData(int leafSize, int avgBucketSize, Set<String> keys) {
 		UniversalHash<String> hashFunction = new StringHash();
-		BitBuffer mphFunction = RecSplitBuilder
+		BitBuffer mphFunctionData = RecSplitBuilder
 				.newInstance(hashFunction)
-				.leafSize(LEAF_SIZE)
-				.averageBucketSize(AVG_BUCKET_SIZE)
+				.leafSize(leafSize)
+				.averageBucketSize(avgBucketSize)
 				.generate(keys);
+		return mphFunctionData.toByteArray();
+	}
+
+	private static RecSplitEvaluator<String> buildEvaluator(int leafSize, int avgBucketSize, byte[] mphFunctionData) {
+		UniversalHash<String> hashFunction = new StringHash();
 		return RecSplitBuilder
 				.newInstance(hashFunction)
-				.leafSize(LEAF_SIZE)
-				.averageBucketSize(AVG_BUCKET_SIZE)
-				.buildEvaluator(mphFunction);
+				.leafSize(leafSize)
+				.averageBucketSize(avgBucketSize)
+				.buildEvaluator(new BitBuffer(mphFunctionData));
 	}
 
-	private final Function<String, Integer> mphFunction;
-	private final long[]                    keyValueMap;
-	private final V[]                       values;
+	public static <V> MPHStringMap<V> fromData(SerializableData<V> data) {
+		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0) ? x -> -1 : buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
+		return new MPHStringMap<V>(mphFunction, data);
+	}
+
+	private MPHStringMap(Function<String, Integer> mphFunction, SerializableData<V> data) {
+		this.mphFunction = mphFunction;
+		this.serializableMphMapData = data;
+		this.keyValueMap = data.keyValueMap;
+		this.values = data.values;
+	}
+
+	@Getter
+	private final SerializableData<V> serializableMphMapData;
+
+	private volatile Function<String, Integer> mphFunction;
+
+	private volatile long[] keyValueMap;
+	private volatile V[]    values;
 
 	private static long getVerifiableValueIndex(String originalKey, int valueIndex) {
 		long encoded = originalKey.hashCode();

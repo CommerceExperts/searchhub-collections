@@ -2,6 +2,7 @@ package io.searchhub.mph;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.*;
 import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -84,5 +85,19 @@ class MPHStringMapTest {
 
 		Iterator<String> keyIterator = testData.keySet().iterator();
 		assertSame(hashSet.get(keyIterator.next()), hashSet.get(keyIterator.next()));
+	}
+
+	@Test
+	void serializationRoundTrip() throws IOException, ClassNotFoundException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ObjectOutputStream objectOut = new ObjectOutputStream(out);
+		objectOut.writeObject(underTest.getSerializableMphMapData());
+		objectOut.close();
+
+		ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
+		MPHStringMap.SerializableData<Integer> deserializedData = (MPHStringMap.SerializableData<Integer>) objectInputStream.readObject();
+		underTest = MPHStringMap.fromData(deserializedData);
+		containsKey();
+		values();
 	}
 }
