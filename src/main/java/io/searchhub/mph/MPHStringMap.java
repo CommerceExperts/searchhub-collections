@@ -32,7 +32,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 	public final static class SerializableData<V> implements Serializable {
 
 		static <X> SerializableData<X> getEmptyData() {
-			return new SerializableData<X>(8, 32, new byte[0], new long[0], (X[]) new Object[0]);
+			return new SerializableData<>(8, 32, new byte[0], new long[0], (X[]) new Object[0]);
 		}
 
 		static final long serialVersionUID = 1_000L;
@@ -189,31 +189,49 @@ public class MPHStringMap<V> implements Map<String, V> {
 		return Arrays.asList(values);
 	}
 
+	/**
+	 * @throws UnsupportedOperationException due to immutability
+	 */
 	@Override
 	public V put(String key, V value) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @throws UnsupportedOperationException due to immutability
+	 */
 	@Override
 	public V remove(Object key) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @throws UnsupportedOperationException due to immutability
+	 */
 	@Override
 	public void putAll(Map<? extends String, ? extends V> m) {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @throws UnsupportedOperationException due to immutability
+	 */
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @throws UnsupportedOperationException since keys are not stored with the map
+	 */
 	@Override
 	public Set<String> keySet() {
 		throw new UnsupportedOperationException();
 	}
 
+	/**
+	 * @throws UnsupportedOperationException since keys are not stored with the map
+	 */
 	@Override
 	public Set<Entry<String, V>> entrySet() {
 		throw new UnsupportedOperationException();
