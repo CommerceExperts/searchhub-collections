@@ -23,7 +23,6 @@ import org.minperf.universal.UniversalHash;
  *
  * @param <V>
  */
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class MPHStringMap<V> implements Map<String, V> {
 
 	private final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
@@ -92,7 +91,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 			keyValueMap[keyIndex] = getVerifiableValueIndex(key, _valueIndex);
 		}
 
-		return new MPHStringMap<>(mphMapData);
+		return new MPHStringMap<>(recSplitEvaluator::evaluate, mphMapData);
 	}
 
 	private static byte[] getMphFunctionData(int leafSize, int avgBucketSize, Set<String> keys) {
