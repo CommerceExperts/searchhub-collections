@@ -3,6 +3,7 @@ package io.searchhub.mph;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import lombok.AccessLevel;
@@ -92,6 +93,44 @@ public class MPHStringMap<V> implements Map<String, V> {
 		}
 
 		return new MPHStringMap<>(recSplitEvaluator::evaluate, mphMapData);
+	}
+
+	public static <V> MPHStringMap<V> build(Iterable<Entry<String, V>> keyValueIterable, int size) {
+		AtomicReference<Entry<String, V>> currentEntry = new AtomicReference<>();
+		Set<String> keySetEmulator = new AbstractSet<>(){
+
+			@Override
+			public Iterator<String> iterator() {
+				Iterator<Entry<String, V>> kvIterator = keyValueIterable.iterator();
+				return new Iterator<>() {
+
+					@Override
+					public boolean hasNext() {
+						return kvIterator.hasNext();
+					}
+
+					@Override
+					public String next() {
+						Entry<String, V> next = kvIterator.next();
+						currentEntry.set(next);
+						return next.getKey();
+					}
+				};
+			}
+
+			@Override
+			public int size() {
+				return size;
+			}
+		};
+		return build(keySetEmulator, key -> {
+			Entry<String, V> entry = currentEntry.get();
+			if (key != null && key.equals(entry.getKey())) {
+				return entry.getValue();
+			} else {
+				return null;
+			}
+		}, size);
 	}
 
 	private static byte[] getMphFunctionData(int leafSize, int avgBucketSize, Set<String> keys) {
