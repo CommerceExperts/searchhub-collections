@@ -6,9 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.minperf.BitBuffer;
 import org.minperf.RecSplitBuilder;
 import org.minperf.RecSplitEvaluator;
@@ -28,7 +26,9 @@ public class MPHStringMap<V> implements Map<String, V> {
 
 	private final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
 
+	@NoArgsConstructor(force = true) // for jackson deserialization
 	@RequiredArgsConstructor
+	@Getter
 	public final static class SerializableData<V> implements Serializable {
 
 		static <X> SerializableData<X> getEmptyData() {
