@@ -26,8 +26,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 
 	private final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
 
-	@NoArgsConstructor(force = true) // for jackson deserialization
 	@RequiredArgsConstructor
+	@AllArgsConstructor
 	@Getter
 	public final static class SerializableData<V> implements Serializable {
 
@@ -37,12 +37,15 @@ public class MPHStringMap<V> implements Map<String, V> {
 
 		static final long serialVersionUID = 1_000L;
 
-		final int    leafSize;
-		final int    avgBucketSize;
-		final byte[] mphFunctionData;
-		final long[] keyValueMap;
-		final V[]    values;
+		int    leafSize;
+		int    avgBucketSize;
+		byte[] mphFunctionData;
+		long[] keyValueMap;
+		V[]    values;
 
+		public void setMphFunctionData(String base64Str) {
+			this.mphFunctionData = Base64.getDecoder().decode(base64Str);
+		}
 	}
 
 	public static <V> MPHStringMap<V> build(Map<String, V> inputData) {
