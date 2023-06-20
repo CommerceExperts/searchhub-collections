@@ -55,9 +55,9 @@ public class JsonSerializationTest {
 	public void testAsTransparentMapImpl() throws JsonProcessingException {
 		AnyDTO dto = new AnyDTO(underTest);
 
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 		// normally not necessary, since it's declared as a java-service-loader impl via META-INF/services
-		mapper.registerModule(new MPHJacksonModule());
+//		mapper.registerModule(new MPHJacksonModule());
 
 		String serializedMap = mapper.writeValueAsString(dto);
 		System.out.println(serializedMap);
