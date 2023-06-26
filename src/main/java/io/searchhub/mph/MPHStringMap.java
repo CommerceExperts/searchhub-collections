@@ -1,17 +1,19 @@
 package io.searchhub.mph;
 
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.minperf.BitBuffer;
 import org.minperf.RecSplitBuilder;
 import org.minperf.RecSplitEvaluator;
 import org.minperf.universal.StringHash;
 import org.minperf.universal.UniversalHash;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 /**
  * Immutable map using minimal perfect hashing for the keys + stores additional hash value per key to reduce risk of wrong mapping.
@@ -32,7 +34,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 	public final static class SerializableData<V> implements Serializable {
 
 		static <X> SerializableData<X> getEmptyData() {
-			return new SerializableData<>(8, 32, new byte[0], new long[0], (X[]) new Object[0]);
+			return new SerializableData<>(8, 32, new byte[0], new long[0], List.of());
 		}
 
 		static final long serialVersionUID = 1_000L;
@@ -41,7 +43,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 		int    avgBucketSize;
 		byte[] mphFunctionData;
 		long[] keyValueMap;
-		V[]    values;
+		List<V> values;
 
 		public void setMphFunctionData(String base64Str) {
 			this.mphFunctionData = Base64.getDecoder().decode(base64Str);
@@ -65,7 +67,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 	 */
 	public static <V> MPHStringMap<V> build(Set<String> keys, Function<String, V> valueLookup, int valueCount) {
 		long[] keyValueMap = new long[keys.size()];
-		V[] values = (V[]) new Object[valueCount];
+		List<V> values = new ArrayList<>(Collections.nCopies(valueCount, null));
 		if (keys.isEmpty()) return new MPHStringMap<>(EMPTY_MAP_FUNCTION, SerializableData.getEmptyData());
 
 		int leafSize = 8, avgBucketSize = 32;
@@ -88,10 +90,10 @@ public class MPHStringMap<V> implements Map<String, V> {
 				_valueIndex = valueIndex.getAndIncrement();
 			}
 
-			if (_valueIndex >= values.length) {
+			if (_valueIndex > values.size()) {
 				throw new IllegalArgumentException("Found more values than specified by valueCount " + valueCount);
 			}
-			values[_valueIndex] = value;
+			values.set(_valueIndex, value);
 			keyValueMap[keyIndex] = getVerifiableValueIndex(key, _valueIndex);
 		}
 
@@ -100,7 +102,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 
 	public static <V> MPHStringMap<V> build(Iterable<Entry<String, V>> keyValueIterable, int size) {
 		AtomicReference<Entry<String, V>> currentEntry = new AtomicReference<>();
-		Set<String> keySetEmulator = new AbstractSet<>(){
+		Set<String> keySetEmulator = new AbstractSet<>() {
 
 			@Override
 			public Iterator<String> iterator() {
@@ -130,7 +132,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 			Entry<String, V> entry = currentEntry.get();
 			if (key != null && key.equals(entry.getKey())) {
 				return entry.getValue();
-			} else {
+			}
+			else {
 				return null;
 			}
 		}, size);
@@ -172,8 +175,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 
 	private volatile Function<String, Integer> mphFunction;
 
-	private volatile long[] keyValueMap;
-	private volatile V[]    values;
+	private volatile long[]  keyValueMap;
+	private volatile List<V> values;
 
 	private static long getVerifiableValueIndex(String originalKey, int valueIndex) {
 		long encoded = originalKey.hashCode();
@@ -222,12 +225,12 @@ public class MPHStringMap<V> implements Map<String, V> {
 	@Override
 	public V get(Object key) {
 		int valueIndex = getValueIndex(key.toString());
-		return valueIndex >= 0 ? values[valueIndex] : null;
+		return valueIndex >= 0 ? values.get(valueIndex) : null;
 	}
 
 	@Override
 	public Collection<V> values() {
-		return Arrays.asList(values);
+		return new ArrayList<>(values);
 	}
 
 	/**

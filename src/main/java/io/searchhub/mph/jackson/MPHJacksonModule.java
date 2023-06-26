@@ -1,6 +1,7 @@
 package io.searchhub.mph.jackson;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.*;
@@ -17,6 +18,7 @@ public class MPHJacksonModule extends SimpleModule {
 		super.addDeserializer(MPHStringMap.class, new MPHStringMapDeserializer());
 
 		super.setMixInAnnotation(Map.class, MapAnnotations.class);
+		super.setMixInAnnotation(MPHStringMap.SerializableData.class, SerializableDataAnnotations.class);
 	}
 
 	@JsonTypeInfo(
@@ -25,5 +27,11 @@ public class MPHJacksonModule extends SimpleModule {
 			defaultImpl = LinkedHashMap.class)
 	public interface MapAnnotations {
 
+	}
+
+
+	public static abstract class SerializableDataAnnotations<V> {
+		@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type")
+		protected List<V> values;
 	}
 }

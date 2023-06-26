@@ -1,23 +1,19 @@
 package io.searchhub.mph;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.searchhub.mph.jackson.MPHJacksonModule;
+import lombok.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.searchhub.mph.jackson.MPHJacksonModule;
-import io.searchhub.mph.jackson.MPHStringMapDeserializer;
-import io.searchhub.mph.jackson.MPHStringMapSerializer;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JsonSerializationTest {
 
@@ -52,12 +48,30 @@ public class JsonSerializationTest {
 	}
 
 	@Test
+	public void testMPHMapWithPrimitiveValue() throws JsonProcessingException {
+		Map<String, int[]> testData = Map.of("unit", new int[] { 1 }, "test", new int[] { 2 });
+		MPHStringMap<int[]> underTest = MPHStringMap.build(testData);
+		PredictDataWrapper dto = new PredictDataWrapper(new PredictData(underTest));
+
+		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+		mapper.enable(DeserializationFeature.USE_JAVA_ARRAY_FOR_JSON_ARRAY);
+		String serializedDto = mapper.writeValueAsString(dto);
+		System.out.println(serializedDto);
+
+		PredictDataWrapper deserializedDto = mapper.readValue(serializedDto, new TypeReference<>() {});
+
+		for (Map.Entry<String, int[]> entry : testData.entrySet()) {
+			assertArrayEquals(underTest.get(entry.getKey()), deserializedDto.getData().map.get(entry.getKey()));
+		}
+	}
+
+	@Test
 	public void testAsTransparentMapImpl() throws JsonProcessingException {
 		AnyDTO dto = new AnyDTO(underTest);
 
 		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 		// normally not necessary, since it's declared as a java-service-loader impl via META-INF/services
-//		mapper.registerModule(new MPHJacksonModule());
+		//		mapper.registerModule(new MPHJacksonModule());
 
 		String serializedMap = mapper.writeValueAsString(dto);
 		System.out.println(serializedMap);
@@ -102,10 +116,30 @@ public class JsonSerializationTest {
 
 	@NoArgsConstructor
 	@AllArgsConstructor
+	@ToString
 	public static class AnyDTO {
+
 		// works
 		// @JsonDeserialize(using = MPHStringMapDeserializer.class)
-
 		public Map<String, String> map;
+	}
+
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class PredictDataWrapper {
+
+		private PredictData data;
+	}
+
+	@Builder(toBuilder = true)
+	@Getter
+	@ToString
+	@EqualsAndHashCode
+	@AllArgsConstructor
+	@NoArgsConstructor(access = AccessLevel.PRIVATE, force = true)
+	public static class PredictData {
+
+		private final Map<String, int[]> map;
 	}
 }

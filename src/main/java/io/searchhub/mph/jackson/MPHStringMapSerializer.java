@@ -32,12 +32,8 @@ public class MPHStringMapSerializer extends StdSerializer<MPHStringMap> {
 		gen.setCurrentValue(value);
 		WritableTypeId typeIdDef = typeSer.writeTypePrefix(gen, typeSer.typeId(value, JsonToken.START_OBJECT));
 
-		MPHStringMap.SerializableData mphData = value.getSerializableMphMapData();
-		gen.writeObjectField("mphFunctionData", mphData.getMphFunctionData());
-		gen.writeObjectField("avgBucketSize", mphData.getAvgBucketSize());
-		gen.writeObjectField("leafSize", mphData.getLeafSize());
-		gen.writeObjectField("keyValueMap", mphData.getKeyValueMap());
-		gen.writeObjectField("values", mphData.getValues());
+		MPHStringMap.SerializableData<?> mphData = value.getSerializableMphMapData();
+		provider.defaultSerializeField("data", mphData, gen);
 		typeSer.writeTypeSuffix(gen, typeIdDef);
 
 	}
