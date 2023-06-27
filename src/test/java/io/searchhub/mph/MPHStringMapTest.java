@@ -17,7 +17,7 @@ class MPHStringMapTest {
 	public void setup() {
 		Random random = new Random();
 		for (int i = 1; i < 'Z'; i++) {
-			String key = Character.toString(i) + " " + (i + random.nextInt());
+			String key = i + " " + (i + random.nextInt());
 			testData.put(key, i);
 		}
 		underTest = MPHStringMap.build(testData);

@@ -24,8 +24,8 @@ public class JsonSerializationTest {
 	public void setup() {
 		Random random = new Random();
 		for (int i = 1; i < 'Z'; i++) {
-			String key = Character.toString(i) + " " + (i + random.nextInt());
-			String value = "Value:" + (i + random.nextInt()) + Character.toString(i);
+			String key = i + " " + (i + random.nextInt());
+			String value = "Value:" + (i + random.nextInt()) + i;
 			testData.put(key, value);
 		}
 		underTest = MPHStringMap.build(testData);
@@ -36,7 +36,7 @@ public class JsonSerializationTest {
 		ObjectMapper mapper = new ObjectMapper();
 		String serializedMPHData = mapper.writeValueAsString(underTest.getSerializableMphMapData());
 
-		MPHStringMap.SerializableData<String> deserializedData = mapper.readValue(serializedMPHData, new TypeReference<>() {});
+		MPHStringMap.SerializableData<String> deserializedData = mapper.readValue(serializedMPHData, new TypeReference<MPHStringMap.SerializableData<String>>() {});
 		MPHStringMap<String> deserializedMPH = MPHStringMap.fromData(deserializedData);
 
 		for (Map.Entry<String, String> entry : testData.entrySet()) {
@@ -49,7 +49,9 @@ public class JsonSerializationTest {
 
 	@Test
 	public void testMPHMapWithPrimitiveValue() throws JsonProcessingException {
-		Map<String, int[]> testData = Map.of("unit", new int[] { 1 }, "test", new int[] { 2 });
+		HashMap<String, int[]> testData = new HashMap<>();
+		testData.put("unit", new int[] { 1 });
+		testData.put("test", new int[] { 2 });
 		MPHStringMap<int[]> underTest = MPHStringMap.build(testData);
 		PredictDataWrapper dto = new PredictDataWrapper(new PredictData(underTest));
 
@@ -58,7 +60,7 @@ public class JsonSerializationTest {
 		String serializedDto = mapper.writeValueAsString(dto);
 		System.out.println(serializedDto);
 
-		PredictDataWrapper deserializedDto = mapper.readValue(serializedDto, new TypeReference<>() {});
+		PredictDataWrapper deserializedDto = mapper.readValue(serializedDto, new TypeReference<PredictDataWrapper>() {});
 
 		for (Map.Entry<String, int[]> entry : testData.entrySet()) {
 			assertArrayEquals(underTest.get(entry.getKey()), deserializedDto.getData().map.get(entry.getKey()));

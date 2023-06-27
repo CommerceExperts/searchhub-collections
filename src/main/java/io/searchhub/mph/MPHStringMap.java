@@ -34,7 +34,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 	public final static class SerializableData<V> implements Serializable {
 
 		static <X> SerializableData<X> getEmptyData() {
-			return new SerializableData<>(8, 32, new byte[0], new long[0], List.of());
+			return new SerializableData<>(8, 32, new byte[0], new long[0], Collections.emptyList());
 		}
 
 		static final long serialVersionUID = 1_000L;
@@ -102,12 +102,12 @@ public class MPHStringMap<V> implements Map<String, V> {
 
 	public static <V> MPHStringMap<V> build(Iterable<Entry<String, V>> keyValueIterable, int size) {
 		AtomicReference<Entry<String, V>> currentEntry = new AtomicReference<>();
-		Set<String> keySetEmulator = new AbstractSet<>() {
+		Set<String> keySetEmulator = new AbstractSet() {
 
 			@Override
 			public Iterator<String> iterator() {
 				Iterator<Entry<String, V>> kvIterator = keyValueIterable.iterator();
-				return new Iterator<>() {
+				return new Iterator() {
 
 					@Override
 					public boolean hasNext() {
