@@ -94,7 +94,7 @@ public class MPHStringSet implements Set<String> {
 
 	@Override
 	public boolean isEmpty() {
-		return secondaryHashes.length == 0;
+		return size() == 0;
 	}
 
 	private boolean containsStr(String key) {
