@@ -8,6 +8,7 @@
     <groupId>io.searchhub</groupId>
     <packaging>jar</packaging>
     <version>1.1.0</version>
+    <version>1.0.1</version>
 
     <properties>
         <java.version>8</java.version>
@@ -30,7 +31,7 @@
         <dependency>
             <groupId>thomasmueller</groupId>
             <artifactId>minperf</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
