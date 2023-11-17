@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.minperf.RecSplitEvaluator;
+import org.minperf.universal.StringHash;
 
 /**
  * Unmodifiable set with constant size usage, that can only provide the 'contains' and 'size' methods, since the keys are not stored.
@@ -24,6 +25,7 @@ public class MPHStringSet implements Set<String> {
 	private final byte[] mphFunctionData;
 
 	private final Function<String, Integer> primaryHashFunction;
+	private final Function<String, Integer> secondaryHashFunction = k -> (int) StringHash.getSipHash24(k, 23L, 31L);
 	private final int[]                     secondaryHashes;
 
 	@RequiredArgsConstructor
@@ -69,7 +71,7 @@ public class MPHStringSet implements Set<String> {
 			primaryHashFunction = recSplitEvaluator::evaluate;
 			for (String key : keys) {
 				int keyIndex = recSplitEvaluator.evaluate(key);
-				secondaryHashes[keyIndex] = key.hashCode();
+				secondaryHashes[keyIndex] = secondaryHashFunction.apply(key);
 			}
 		}
 	}
@@ -100,7 +102,7 @@ public class MPHStringSet implements Set<String> {
 	private boolean containsStr(String key) {
 		if (isEmpty()) return false;
 		int keyIndex = primaryHashFunction.apply(key);
-		return secondaryHashes[keyIndex] == key.hashCode();
+		return secondaryHashes[keyIndex] == secondaryHashFunction.apply(key);
 	}
 
 	@Override
