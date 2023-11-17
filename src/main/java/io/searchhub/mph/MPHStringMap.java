@@ -1,13 +1,12 @@
 package io.searchhub.mph;
 
+import static io.searchhub.mph.MPHUtil.buildEvaluator;
+import static io.searchhub.mph.MPHUtil.getMphFunctionData;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.minperf.BitBuffer;
-import org.minperf.RecSplitBuilder;
 import org.minperf.RecSplitEvaluator;
-import org.minperf.universal.StringHash;
-import org.minperf.universal.UniversalHash;
 
 import java.io.Serializable;
 import java.util.*;
@@ -137,25 +136,6 @@ public class MPHStringMap<V> implements Map<String, V> {
 				return null;
 			}
 		}, size);
-	}
-
-	private static byte[] getMphFunctionData(int leafSize, int avgBucketSize, Set<String> keys) {
-		UniversalHash<String> hashFunction = new StringHash();
-		BitBuffer mphFunctionData = RecSplitBuilder
-				.newInstance(hashFunction)
-				.leafSize(leafSize)
-				.averageBucketSize(avgBucketSize)
-				.generate(keys);
-		return mphFunctionData.toByteArray();
-	}
-
-	private static RecSplitEvaluator<String> buildEvaluator(int leafSize, int avgBucketSize, byte[] mphFunctionData) {
-		UniversalHash<String> hashFunction = new StringHash();
-		return RecSplitBuilder
-				.newInstance(hashFunction)
-				.leafSize(leafSize)
-				.averageBucketSize(avgBucketSize)
-				.buildEvaluator(new BitBuffer(mphFunctionData));
 	}
 
 	public static <V> MPHStringMap<V> fromData(SerializableData<V> data) {
