@@ -43,4 +43,23 @@ class MPHStringSetTest {
 		}
 	}
 
+	@Test
+	public void collision() {
+		assertEquals(verboseHash("Aa"), verboseHash("BB"));
+		assertEquals("KaltschAaummatratze".hashCode(), "KaltschBBummatratze".hashCode());
+
+	}
+
+	private static int verboseHash(String in) {
+		System.out.println("-- input: "+in);
+		int h = 0;
+		for (byte v : in.getBytes()) {
+			System.out.println("(v & 0xff) = "+(v & 0xff));
+			System.out.println(" 31 * h = "+ (31 * h));
+			h = 31 * h + (v & 0xff);
+			System.out.println("h = "+h);
+		}
+		return h;
+	}
+
 }
