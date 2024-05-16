@@ -5,11 +5,11 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.util.Map;
 
-class MPHStringMapTest extends AbstractMPHStringIntegerMapTest<MPHStringMap<Integer>> {
+class MPHStringIntMapTest extends AbstractMPHStringIntegerMapTest<MPHStringIntMap> {
 
 	@Override
-	protected MPHStringMap<Integer> createUnderTest(Map<String, Integer> testData) {
-		return MPHStringMap.build(testData);
+	protected MPHStringIntMap createUnderTest(Map<String, Integer> testData) {
+		return MPHStringIntMap.build(testData);
 	}
 
 	@Test
@@ -20,8 +20,8 @@ class MPHStringMapTest extends AbstractMPHStringIntegerMapTest<MPHStringMap<Inte
 		objectOut.close();
 
 		ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
-		MPHStringMap.SerializableData<Integer> deserializedData = (MPHStringMap.SerializableData<Integer>) objectInputStream.readObject();
-		underTest = MPHStringMap.fromData(deserializedData);
+		MPHStringIntMap.SerializableData deserializedData = (MPHStringIntMap.SerializableData) objectInputStream.readObject();
+		underTest = MPHStringIntMap.fromData(deserializedData);
 		containsKey();
 		values();
 	}
