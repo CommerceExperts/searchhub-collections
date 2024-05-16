@@ -17,6 +17,9 @@ import static io.searchhub.mph.MPHUtil.getMphFunctionData;
  * Immutable map using minimal perfect hashing for the keys + stores additional hash value per key to exclude non-existing keys.
  * <p>Since keys are not stored, it's not possible to use `keySet` and `entrySet`.</p>
  * <p>
+ * This is a lean version of MPHStringMap as it does not need an additional list of values.
+ * </p>
+ * <p>
  * Also since immutable, put, putAll, clear and remove will throw an UnsupportedOperationException.
  * </p>
  */
@@ -38,6 +41,7 @@ public class MPHStringIntMap implements Map<String, Integer> {
 		int    leafSize;
 		int    avgBucketSize;
 		byte[] mphFunctionData;
+		// this array contains the verification-hash (32bit) + the actual stored integer value (32bit)
 		long[] valueMap;
 
 		public void setMphFunctionData(String base64Str) {
