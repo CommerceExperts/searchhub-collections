@@ -25,8 +25,6 @@ import static io.searchhub.mph.MPHUtil.getMphFunctionData;
  */
 public class MPHStringIntMap implements Map<String, Integer> {
 
-	private final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
-
 	@RequiredArgsConstructor
 	@AllArgsConstructor
 	@Getter
@@ -64,7 +62,7 @@ public class MPHStringIntMap implements Map<String, Integer> {
 	 */
 	public static MPHStringIntMap build(Set<String> keys, Function<String, Integer> valueLookup) {
 		long[] valueEntries = new long[keys.size()];
-		if (keys.isEmpty()) return new MPHStringIntMap(EMPTY_MAP_FUNCTION, SerializableData.getEmptyData());
+		if (keys.isEmpty()) return new MPHStringIntMap(MPHUtil.EMPTY_MAP_FUNCTION, SerializableData.getEmptyData());
 
 		int leafSize = 8, avgBucketSize = 32;
 		byte[] mphFunctionData = getMphFunctionData(leafSize, avgBucketSize, keys);
@@ -120,7 +118,7 @@ public class MPHStringIntMap implements Map<String, Integer> {
 	}
 
 	public static MPHStringIntMap fromData(SerializableData data) {
-		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0) ? x -> -1 : buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
+		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0) ? MPHUtil.EMPTY_MAP_FUNCTION : buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
 		return new MPHStringIntMap(mphFunction, data);
 	}
 

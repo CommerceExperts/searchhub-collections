@@ -25,8 +25,6 @@ import java.util.function.Function;
  */
 public class MPHStringMap<V> implements Map<String, V> {
 
-	private final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
-
 	@RequiredArgsConstructor
 	@AllArgsConstructor
 	@Getter
@@ -67,7 +65,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 	public static <V> MPHStringMap<V> build(Set<String> keys, Function<String, V> valueLookup, int valueCount) {
 		long[] keyValueMap = new long[keys.size()];
 		List<V> values = new ArrayList<>(Collections.nCopies(valueCount, null));
-		if (keys.isEmpty()) return new MPHStringMap<>(EMPTY_MAP_FUNCTION, SerializableData.getEmptyData());
+		if (keys.isEmpty()) return new MPHStringMap<>(MPHUtil.EMPTY_MAP_FUNCTION, SerializableData.getEmptyData());
 
 		int leafSize = 8, avgBucketSize = 32;
 		byte[] mphFunctionData = getMphFunctionData(leafSize, avgBucketSize, keys);
@@ -139,7 +137,7 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	public static <V> MPHStringMap<V> fromData(SerializableData<V> data) {
-		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0) ? x -> -1 : buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
+		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0) ? MPHUtil.EMPTY_MAP_FUNCTION : buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
 		return new MPHStringMap<V>(mphFunction, data);
 	}
 
