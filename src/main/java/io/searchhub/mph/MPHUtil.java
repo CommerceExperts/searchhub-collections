@@ -1,6 +1,7 @@
 package io.searchhub.mph;
 
 import java.util.Set;
+import java.util.function.Function;
 
 import org.minperf.BitBuffer;
 import org.minperf.RecSplitBuilder;
@@ -10,6 +11,7 @@ import org.minperf.universal.UniversalHash;
 
 class MPHUtil {
 
+	public final static Function<String, Integer> EMPTY_MAP_FUNCTION = x -> -1;
 
 	static byte[] getMphFunctionData(int leafSize, int avgBucketSize, Set<String> keys) {
 		UniversalHash<String> hashFunction = new StringHash();
