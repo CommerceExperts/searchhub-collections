@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.Collections;
 import java.util.stream.IntStream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.searchhub.mph.MPHStringSet.SerializableData;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +49,18 @@ class MPHStringSetTest {
 	public void collision() {
 		assertEquals(verboseHash("Aa"), verboseHash("BB"));
 		assertEquals("KaltschAaummatratze".hashCode(), "KaltschBBummatratze".hashCode());
+	}
 
+	@Test
+	public void serializeEmptySet() throws JsonProcessingException {
+		SerializableData dto = new MPHStringSet().toSerializable();
+
+		// serialization round trip
+		ObjectMapper mapper = new ObjectMapper();
+		String serialized = mapper.writeValueAsString(dto);
+		SerializableData dto2 = mapper.readValue(serialized, SerializableData.class);
+
+		assertTrue(new MPHStringSet(dto2).isEmpty());
 	}
 
 	private static int verboseHash(String in) {

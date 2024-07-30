@@ -63,7 +63,7 @@ public class MPHStringSet implements Set<String> {
 		if (keys.isEmpty()) {
 			secondaryHashes = new int[0];
 			primaryHashFunction = k -> -1;
-			mphFunctionData = null;
+			mphFunctionData = new byte[0];
 		} else {
 			secondaryHashes = new int[keys.size()];
 			mphFunctionData = getMphFunctionData(leafSize, avgBucketSize, keys);
@@ -81,8 +81,12 @@ public class MPHStringSet implements Set<String> {
 		leafSize = dto.leafSize;
 		avgBucketSize = dto.avgBucketSize;
 		mphFunctionData = dto.mphFunctionData;
-		RecSplitEvaluator<String> recSplitEvaluator = buildEvaluator(dto.leafSize, dto.avgBucketSize, dto.mphFunctionData);
-		primaryHashFunction = recSplitEvaluator::evaluate;
+		if (mphFunctionData.length == 0) {
+			primaryHashFunction = k -> -1;
+		} else {
+			RecSplitEvaluator<String> recSplitEvaluator = buildEvaluator(dto.leafSize, dto.avgBucketSize, dto.mphFunctionData);
+			primaryHashFunction = recSplitEvaluator::evaluate;
+		}
 	}
 
 	public SerializableData toSerializable() {
