@@ -30,11 +30,12 @@ public class MPHStringMapSerializer extends StdSerializer<MPHStringMap> {
 	public void serializeWithType(MPHStringMap value, JsonGenerator gen, SerializerProvider provider, TypeSerializer typeSer) throws IOException {
 		// [databind#631]: Assign current value, to be accessible by custom serializers
 		gen.setCurrentValue(value);
+
 		WritableTypeId typeIdDef = typeSer.writeTypePrefix(gen, typeSer.typeId(value, JsonToken.START_OBJECT));
+		gen.writeStringField("@type", "mphMap");
+		gen.writeFieldName("data");
+		gen.writeObject(value.getSerializableMphMapData());
 
-		MPHStringMap.SerializableData<?> mphData = value.getSerializableMphMapData();
-		provider.defaultSerializeField("data", mphData, gen);
 		typeSer.writeTypeSuffix(gen, typeIdDef);
-
 	}
 }

@@ -56,10 +56,14 @@ public class MPHStringMap<V> implements Map<String, V> {
 	 * To use it, the exact amount of values has to be known.
 	 * The values SHOULD implement equals and hashCode to allow a correct deduplication.
 	 *
-	 * @param keys        key-set
-	 * @param valueLookup function to lookup a value for a key
-	 * @param valueCount  the exact count of values. If the value count is similar to the amount of keys, no deduplication is done.
-	 * @param <V>         value type
+	 * @param keys
+	 * 		key-set
+	 * @param valueLookup
+	 * 		function to lookup a value for a key
+	 * @param valueCount
+	 * 		the exact count of values. If the value count is similar to the amount of keys, no deduplication is done.
+	 * @param <V>
+	 * 		value type
 	 * @return
 	 */
 	public static <V> MPHStringMap<V> build(Set<String> keys, Function<String, V> valueLookup, int valueCount) {
@@ -137,7 +141,9 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	public static <V> MPHStringMap<V> fromData(SerializableData<V> data) {
-		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0) ? MPHUtil.EMPTY_MAP_FUNCTION : buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
+		Function<String, Integer> mphFunction = (data.mphFunctionData.length == 0)
+				? MPHUtil.EMPTY_MAP_FUNCTION
+				: buildEvaluator(data.leafSize, data.avgBucketSize, data.mphFunctionData)::evaluate;
 		return new MPHStringMap<V>(mphFunction, data);
 	}
 
@@ -212,7 +218,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException due to immutability
+	 * @throws UnsupportedOperationException
+	 * 		due to immutability
 	 */
 	@Override
 	public V put(String key, V value) {
@@ -220,7 +227,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException due to immutability
+	 * @throws UnsupportedOperationException
+	 * 		due to immutability
 	 */
 	@Override
 	public V remove(Object key) {
@@ -228,7 +236,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException due to immutability
+	 * @throws UnsupportedOperationException
+	 * 		due to immutability
 	 */
 	@Override
 	public void putAll(Map<? extends String, ? extends V> m) {
@@ -236,7 +245,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException due to immutability
+	 * @throws UnsupportedOperationException
+	 * 		due to immutability
 	 */
 	@Override
 	public void clear() {
@@ -244,7 +254,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException since keys are not stored with the map
+	 * @throws UnsupportedOperationException
+	 * 		since keys are not stored with the map
 	 */
 	@Override
 	public Set<String> keySet() {
@@ -252,7 +263,8 @@ public class MPHStringMap<V> implements Map<String, V> {
 	}
 
 	/**
-	 * @throws UnsupportedOperationException since keys are not stored with the map
+	 * @throws UnsupportedOperationException
+	 * 		since keys are not stored with the map
 	 */
 	@Override
 	public Set<Entry<String, V>> entrySet() {
