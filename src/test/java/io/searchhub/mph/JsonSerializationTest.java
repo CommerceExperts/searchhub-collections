@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.searchhub.mph.jackson.MPHJacksonModule;
+import io.searchhub.mph.jackson.UseMPHMapPolymorphism;
 import lombok.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,7 @@ public class JsonSerializationTest {
 		ObjectMapper mapper = new ObjectMapper();
 		String serializedMPHData = mapper.writeValueAsString(underTest.getSerializableMphMapData());
 
-		MPHStringMap.SerializableData<String> deserializedData = mapper.readValue(serializedMPHData, new TypeReference<MPHStringMap.SerializableData<String>>() {});
+		MPHStringMap.SerializableData<String> deserializedData = mapper.readValue(serializedMPHData, new TypeReference<>() {});
 		MPHStringMap<String> deserializedMPH = MPHStringMap.fromData(deserializedData);
 
 		for (Map.Entry<String, String> entry : testData.entrySet()) {
@@ -60,7 +61,7 @@ public class JsonSerializationTest {
 		String serializedDto = mapper.writeValueAsString(dto);
 		System.out.println(serializedDto);
 
-		PredictDataWrapper deserializedDto = mapper.readValue(serializedDto, new TypeReference<PredictDataWrapper>() {});
+		PredictDataWrapper deserializedDto = mapper.readValue(serializedDto, new TypeReference<>() {});
 
 		for (Map.Entry<String, int[]> entry : testData.entrySet()) {
 			assertArrayEquals(underTest.get(entry.getKey()), deserializedDto.getData().map.get(entry.getKey()));
@@ -111,9 +112,9 @@ public class JsonSerializationTest {
 
 	@Test
 	public void testMapType() throws JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, String> map = mapper.readValue("{\"foo\":\"bar\"}", new TypeReference<Map<String, String>>() {});
-		System.out.println(map.getClass().getCanonicalName());
+		ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+		Map<String, String> map = mapper.readValue("{\"foo\":\"bar\"}", new TypeReference<>() {});
+		assertEquals("java.util.LinkedHashMap", map.getClass().getCanonicalName());
 	}
 
 	@NoArgsConstructor
@@ -121,8 +122,7 @@ public class JsonSerializationTest {
 	@ToString
 	public static class AnyDTO {
 
-		// works
-		// @JsonDeserialize(using = MPHStringMapDeserializer.class)
+		@UseMPHMapPolymorphism
 		public Map<String, String> map;
 	}
 
@@ -142,6 +142,7 @@ public class JsonSerializationTest {
 	@NoArgsConstructor(access = AccessLevel.PRIVATE, force = true)
 	public static class PredictData {
 
+		@UseMPHMapPolymorphism
 		private final Map<String, int[]> map;
 	}
 }
