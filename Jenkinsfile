@@ -1,6 +1,7 @@
 pipeline {
     agent { label 'docker' }
     environment {
+        JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64/'
         PROJECT_VERSION = readMavenPom().getVersion()
     }
     
