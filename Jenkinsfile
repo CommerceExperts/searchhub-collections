@@ -27,7 +27,7 @@ pipeline {
                 withMaven(
                     mavenSettingsConfig: '67c40a88-505a-4f78-94a3-d879cc1a29f6'
                 ) {
-                    sh 'mvn deploy -Dmaven.test.skip=true || echo $?'
+                    sh 'mvn deploy -Psearchhub-nexus3 -Dmaven.test.skip=true || echo $?'
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
                 echo "deploying release version ${PROJECT_VERSION}"
                 
                 withMaven(mavenSettingsConfig: '67c40a88-505a-4f78-94a3-d879cc1a29f6') {
-                    sh 'mvn deploy -Dmaven.test.skip=true'
+                    sh 'mvn deploy -Psearchhub-nexus3 -Dmaven.test.skip=true'
                 }
                 
                 sshagent (credentials: ['cxp-bot']) {
